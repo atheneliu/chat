@@ -1,21 +1,22 @@
 /* global logger */
-import { config } from './config'
 import express from 'express'
 import path from 'path'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import compression from 'compression'
-import apiRoutes from './feedback/apiRoutes'
-import epocketRoutes from './epocket/apiRoutes'
 // import template from './feedback/render'
-import { basicAuth as basicAuthMiddleWare, errorLog } from './common'
 import session from 'express-session'
 import connectRedis from 'connect-redis'
 import Redis from 'ioredis'
 import Schedule from 'node-schedule'
 import history from 'connect-history-api-fallback'
 import monitor from 'express-status-monitor'
+import apiRoutes from './feedback/apiRoutes'
+import epocketRoutes from './epocket/apiRoutes'
+import { basicAuth as basicAuthMiddleWare, errorLog } from './common'
 import fetchUserInfo from './parseClientInfo'
+import { config } from './config'
+// import fetchUserInfo from '../parseClientInfo'
 
 const app = express()
 
@@ -48,8 +49,8 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 2 },
   store: new RedisStore({
     client: new Redis(config.redis.session),
-    prefix: 'dr:feedback:login:session:'
-  })
+    prefix: 'dr:feedback:login:session:',
+  }),
 }))
 
 // Serve static files

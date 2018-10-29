@@ -1,5 +1,15 @@
+// const path = require('path')
+
+// function resolve(dir) {
+//   return path.join(__dirname, dir)
+// }
+
 module.exports = {
   devServer: {
-    proxy: 'http://localhost:8028'
-  }
+    proxy: 'http://localhost:8028',
+  },
+  // chainWebpack: (config) => {
+  //   config.resolve.alias
+  //     .set('', resolve('src'))
+  // },
 }
