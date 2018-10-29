@@ -6,12 +6,15 @@
         <p><a href="tel:400-686-9762">400-686-9762</a></p>
       </div>
       <pull-refresh :next="refresh">
-        <ul v-change1 id="myUl" slot="list">
-          <li :class="item.type === 2 ? 'right' : 'left'" v-for="(item,index) in dialogueList" :key="index" class="item">
-            <img class="avatar" src="">
-            <span class="msg">{{item.message}}</span>
-          </li>
-        </ul>
+        <div v-change1 id="myUl" slot="list">
+          <section v-for="(item,index) in dialogueList" :key="index">
+            <div class="time" v-if="showTime(index)">{{item.createdAt | formatDate}}</div>
+            <div :class="item.type === 2 ? 'right' : 'left'" class="item">
+              <img class="avatar" src="">
+              <span class="msg">{{item.message}}</span>
+            </div>
+          </section>
+        </div>
       </pull-refresh>
     </div>
     <div class="comment-btn" @click="closeComment">
@@ -32,9 +35,20 @@
 
 <script>
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
+  import moment from 'moment'
   // eslint-disable-next-line
   import { Feedback } from '@/constants/ActionTypes.js'
   import pullRefresh from '../components/PullFresh'
+  // eslint-disable-next-line
+  import {
+    MESSAGE_USER,
+    MESSAGE_TEXT_PIC,
+    MESSAGE_PIC,
+    MESSAGE_WEBVIEW,
+    MESSAGE_CASE,
+    MESSAGE_CIRCLE,
+  } from '@/constants/Literal'
+  import formatDate from '@/utils/formatDate'
 
   let height = 0
   export default {
@@ -61,7 +75,12 @@
         'dialogueList',
         'sendStatus',
         'lastTime'
-      ])
+      ]),
+    },
+    filters: {
+      formatDate(time) {
+        return formatDate(new Date(time), 'yyyy-MM-dd hh:mm:ss');
+      }
     },
     async mounted() {
        window.addEventListener('scroll', this.scroll)
@@ -93,7 +112,14 @@
       },
       async refresh() {
        await this.getDialogueList(this.lastTime)
-      }
+      },
+      showTime(index) {
+        const nowItem = this.dialogueList[index]
+        const nowTime = new Date(nowItem.createdAt).getTime()
+        const preTime = this.dialogueList[index - 1] ? new Date(this.dialogueList[index - 1].createdAt).getTime() : nowTime
+        // 第一条+图文消息+间隔三分钟的消息 显示时间
+        return nowItem.isFirst || nowItem.messageType === MESSAGE_TEXT_PIC || (nowTime - preTime) / 1000 > 180
+      },
     },
     directives: {
       change1: {
@@ -240,6 +266,16 @@
     width: 100%;
     font-size: 14px;
     box-sizing: border-box;
+  }
+
+  .time {
+    color: #bbbbbb;
+    font-size: 13px;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    margin: 0.14rem 0px;
+    text-align: center;
   }
   
   .item {
