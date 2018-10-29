@@ -5,12 +5,14 @@
         <p>吐槽不好用的功能、有错误的内容、报告您发现的问题，我们将为您不断改进。</p>
         <p><a href="tel:400-686-9762">400-686-9762</a></p>
       </div>
-      <ul v-change1 id="myUl">
-        <li :class="item.type === 2 ? 'right' : 'left'" v-for="(item,index) in dialogueList" :key="index" class="item">
-          <img class="avatar" src="">
-          <span class="msg">{{item.message}}</span>
-        </li>
-      </ul>
+      <pull-refresh :next="refresh">
+        <ul v-change1 id="myUl" slot="list">
+          <li :class="item.type === 2 ? 'right' : 'left'" v-for="(item,index) in dialogueList" :key="index" class="item">
+            <img class="avatar" src="">
+            <span class="msg">{{item.message}}</span>
+          </li>
+        </ul>
+      </pull-refresh>
     </div>
     <div class="comment-btn" @click="closeComment">
       <img src="" alt="" class="comment-right">
@@ -32,12 +34,16 @@
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
   // eslint-disable-next-line
   import { Feedback } from '@/constants/ActionTypes.js'
+  import pullRefresh from '../components/PullFresh'
 
   let height = 0
   export default {
     name: 'Feedback',
     created() {
       this.getDialogueList()
+    },
+    components: {
+      pullRefresh
     },
     watch: {
       // 监听发送状态，成功时关闭 输入框，自动滚动到最底部
@@ -50,15 +56,11 @@
       }
     },
     computed: {
-      // ...mapState({
-      //   userInfo,
-      //   dialogueList,
-      //   sendStatus,
-      // }),
       ...mapGetters([
         'userInfo',
         'dialogueList',
-        'sendStatus'
+        'sendStatus',
+        'lastTime'
       ])
     },
     async mounted() {
@@ -89,6 +91,9 @@
       scroll() {
         console.log('scrollToTop-->', this.$el.scrollTop, this.$el.scrollHeight, this.$el.offsetHeight)
       },
+      async refresh() {
+       await this.getDialogueList(this.lastTime)
+      }
     },
     directives: {
       change1: {

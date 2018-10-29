@@ -13,6 +13,7 @@ const app = {
     dialogueList: [],
     userInfo: {},
     sendStatus: false,
+    lastTime: new Date(),
   },
   mutations: {
     [Feedback.UPDATE_USER_INFO](state, userInfo) {
@@ -24,7 +25,9 @@ const app = {
       state.sendStatus = true
     },
     [Feedback.UPDATE_DIALOGUE_LIST](state, dialogueList) {
-      state.dialogueList = dialogueList
+      state.dialogueList = [...dialogueList, ...state.dialogueList]
+      console.log('UPDATE_DIALOGUE_LIST', dialogueList[0].createdAt)
+      state.lastTime = dialogueList.length ? dialogueList[0].createdAt : state.lastTime
     },
     [Feedback.INIT_SENDSTATUS](state) {
       state.sendStatus = false
@@ -67,8 +70,9 @@ const app = {
       }
       // this.closeComment()
     },
-    async getDialogueList({ commit }) {
-      const res = await request.get('/api/dialogue')
+    async getDialogueList({ commit }, lastTime) {
+      console.log('getDialogueList-->', lastTime)
+      const res = await request.get('/api/dialogue', { lastTime })
       if (res.result === RquestStatus.SUCCESS) {
         commit(Feedback.UPDATE_DIALOGUE_LIST, res.dialogue)
       } else {
@@ -80,6 +84,7 @@ const app = {
     userInfo: state => state.userInfo,
     dialogueList: state => state.dialogueList,
     sendStatus: state => state.sendStatus,
+    lastTime: state => state.lastTime,
   },
 }
 
