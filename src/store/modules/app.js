@@ -4,6 +4,7 @@ import request from '@/utils/request.js'
 import { Feedback, RquestStatus } from '@/constants/ActionTypes.js'
 import uuid from 'node-uuid'
 import Vue from 'vue'
+import Literal from '@/constants/Literal'
 
 const MESSAGE_TEXT = 'TEXT'
 const MESSAGE_USER = 1
@@ -42,7 +43,7 @@ const app = {
         Vue.toast('获取用户信息失败，请退出该页面重试')
       }
     },
-    async sendMessage({ commit, state }, { inputValue }) {
+    async sendMessage({ commit, state }, { inputValue, imageUrl = [], messageType = Literal.MESSAGE_TEXT }) {
       const {
         userId, deviceId, appName, appVersion, model, fullName, roleId,
       } = state.userInfo
@@ -51,14 +52,14 @@ const app = {
         userName: fullName,
         userId,
         message: inputValue,
-        messageType: MESSAGE_TEXT,
+        messageType,
         deviceId,
         appName,
         appVersion,
         model,
         type: MESSAGE_USER,
         messageId: uuid.v4(),
-        imageUrl: JSON.stringify([]),
+        imageUrl: JSON.stringify(imageUrl),
       }
       const data = await request.post('/api/message', { messageInfo })
       console.log('data-->', data)

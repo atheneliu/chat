@@ -47,9 +47,9 @@
         <!-- </div> -->
        </mescroll-vue>
     </div>
-    <div class="comment-btn" @click="closeComment">
-      <img :src="uploadPic" alt="" class="comment-right">
-      <div class="comment-left">请输入产品使用的问题、建议...</div>
+    <div class="comment-btn">
+      <img :src="uploadPic" alt="" class="comment-right" @click="postImageMessage">
+      <div class="comment-left" @click="closeComment">请输入产品使用的问题、建议...</div>
     </div>
     <div class="mask" v-if="showComment" @click.self="closeComment">
       <div class="comment-box">
@@ -129,6 +129,7 @@
           callback: this.downCallback, // 上拉回调,此处简写; 相当于 callback: function(page, mescroll) { }
           htmlNodata: '<p class="upwarp-nodata">-- END --</p>',
         },
+        limit: 9,
       }
     },
     methods: {
@@ -161,6 +162,7 @@
         return nowItem.isFirst || nowItem.messageType === Literal.MESSAGE_TEXT_PIC || (nowTime - preTime) / 1000 > 180
       },
       formatMsg(message) {
+        if (!message) return
         // 将文字中的链接替换出来：实现文本中的连接可以跳转
         const optLinks = isArray(message.match(Literal.urlRegex)) ? message.match(Literal.urlRegex).map(item => (`<a href="${item}">${item}</a>`)) : ''
         const otherContents = message.replace(Literal.urlRegex, '|&&|').split('|&&|')
@@ -170,7 +172,7 @@
 
           const fontMsg = isArray(textP) && textP.join('') || content
           const linkMsg = isArray(optLinks) && optLinks[index] || ''
-          console.log('fontMsg-->', fontMsg, linkMsg, optLinks)
+          // console.log('fontMsg-->', fontMsg, linkMsg, optLinks)
           return fontMsg + linkMsg
         }).join('')
       },
@@ -186,6 +188,36 @@
           this.mescroll.endSuccess()
         })
       },
+      postImageMessage() {
+        this.$optionSelect([
+          { title: '拍照', onClick: this.takePictureClick },
+          { title: '相册', onClick: this.selectPictureClick }
+        ])
+      },
+      async takePictureClick(closeOptions) {
+        closeOptions()
+        const res = await window.$bridge.takePicture(this.limit)
+        const imageUrl = await this.uploadImages(res)
+        this.sendMessage({ imageUrl, messageType: Literal.MESSAGE_PIC })
+      },
+      async selectPictureClick(closeOptions) {
+        closeOptions()
+        const res = await window.$bridge.selectPicture(this.limit)
+        const imageUrl = await this.uploadImages(res)
+        this.sendMessage({ imageUrl, messageType: Literal.MESSAGE_PIC })
+      },
+      async uploadImages(res) {
+        // 拿到图片后直接上传
+        const { uploadDomain, userId } = this.userInfo
+        const imageKeys = res.images.map(({ filename }) => filename)
+        const bizUid = String(Date.now())
+        await bridge.uploadImage({
+          images: imageKeys,
+          bizUid,
+          bucket: 'feedback',
+        })
+        return imageKeys.map(key => `${uploadDomain}${userId}/${bizUid}/${key}`)
+      }
     },
     directives: {
       change1: {
