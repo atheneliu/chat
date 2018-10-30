@@ -9,8 +9,8 @@
         <div v-change1 id="myUl" slot="list">
           <section v-for="(item,index) in dialogueList" :key="index">
             <div class="time" v-if="showTime(index)">{{item.createdAt | formatDate}}</div>
-            <div :class="item.type === Literal.MESSAGE_ADMIN ? 'left' : 'right'" class="item">
-              <img class="avatar" :src="item.type === Literal.MESSAGE_ADMIN ? adminPic : (userInfo.avatar || userPic)">
+            <div :class="item.type === Literal.MESSAGE_USER ? 'right' : 'left'" class="item">
+              <img class="avatar" :src="item.type === Literal.MESSAGE_USER ? (userInfo.avatar || userPic) : adminPic">
               <div class="msg-box">
                 <div class="msg-pic" v-if="item.messageType === Literal.MESSAGE_PIC">
                   <img 
@@ -30,6 +30,13 @@
                 <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CIRCLE">
                    <p v-html="formatMsg(item.message)"></p>
                    <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>
+                </div>
+                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_TEXT_PIC">
+                   <a :href="item.url">
+                     <header>{{item.title}}</header>
+                     <p v-html="formatMsg(item.message)"></p>
+                     <img v-if="item.imageUrl" :src="item.imageUrl" >
+                   </a>
                 </div>
                 <div class="msg-default" v-else>
                   <p v-html="formatMsg(item.message)"></p>

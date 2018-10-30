@@ -12,8 +12,8 @@ const APPNAME_MEDCLIPSPLUS = 'medclips_plus'
 const OSNAME_ANDROID = 'android'
 const OSNAME_IOS = 'ios'
 const SESSIONINFO_REG = /{[^}]*}/g
-const requireUrl = process.env.NODE_ENV === 'production' ? 'http://uas.xsl.link/profile/default/user/_profile' :
-  'http://qa-uas.xsl.link/profile/default/user/_profile'
+const requireUrl = process.env.NODE_ENV === 'production' ? 'http://uas.xsl.link/profile/default/user/_profile'
+  : 'http://qa-uas.xsl.link/profile/default/user/_profile'
 
 const epocketArr = ['epocket', 'EPocket', 'IOSEpocket', 'epocketIOS']
 const medchartArr = ['medchart', '病历夹Pub', 'MedicalRecordsFolder', 'MedicalRecordIOS',
@@ -64,7 +64,7 @@ function parseOsName(ua) {
   if (!ua) return null
   if (ua.toLowerCase().indexOf('ios') >= 0) {
     return OSNAME_IOS
-  } else if (ua.toLowerCase().indexOf('android') >= 0) {
+  } if (ua.toLowerCase().indexOf('android') >= 0) {
     return OSNAME_ANDROID
   }
   return null
@@ -90,8 +90,8 @@ function parseSessionInfo(sessionKey) {
     appName,
     appVersion,
     model: osName,
-    deviceInfo: `${appName}/${appVersion} ` +
-      `(${osName}, ${osName} ${parseAppInfo(infos[10])}) net/null`,
+    deviceInfo: `${appName}/${appVersion} `
+      + `(${osName}, ${osName} ${parseAppInfo(infos[10])}) net/null`,
   }
 }
 
@@ -99,7 +99,7 @@ function noneEncode(each) {
   return each
 }
 
- /**
+/**
   * 解析用户信息的中间件
   * 解析规则：
   *   先从 header 中获取
@@ -203,4 +203,3 @@ export default async (req, res, next) => {
     next()
   }
 }
-
