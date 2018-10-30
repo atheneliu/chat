@@ -126,7 +126,6 @@ export default {
     text-align: center;
     line-height: 0.5rem;
     color: #666;
-    border-bottom: 1px solid #eee;
   }
   .vue-pull-refresh-msg .icon-reverse {
     transform: rotate(180deg);

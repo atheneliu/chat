@@ -6,7 +6,7 @@
 
 module.exports = {
   devServer: {
-    proxy: 'http://localhost:8028',
+    proxy: 'http://10.1.100.189:8028',
   },
   // chainWebpack: (config) => {
   //   config.resolve.alias

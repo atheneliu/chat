@@ -110,3 +110,7 @@ table {
 a {
   word-break: break-all;
 }
+
+html, body {
+  height: 100%;
+}

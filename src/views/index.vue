@@ -1,51 +1,51 @@
 <template>
-  <div class="feedback" @scroll="scroll">
+  <div class="feedback" >
     <div class="content" ref="dialog" id="myData">
       <div v-if="!dialogueList.length" class="tips">
         <p>吐槽不好用的功能、有错误的内容、报告您发现的问题，我们将为您不断改进。</p>
         <p><a href="tel:400-686-9762">400-686-9762</a></p>
       </div>
-      <pull-refresh :next="refresh">
-        <div v-change1 id="myUl" slot="list">
-          <section v-for="(item,index) in dialogueList" :key="index">
-            <div class="time" v-if="showTime(index)">{{item.createdAt | formatDate}}</div>
-            <div :class="item.type === Literal.MESSAGE_USER ? 'right' : 'left'" class="item">
-              <img class="avatar" :src="item.type === Literal.MESSAGE_USER ? (userInfo.avatar || userPic) : adminPic">
-              <div class="msg-box">
-                <div class="msg-pic" v-if="item.messageType === Literal.MESSAGE_PIC">
-                  <img 
-                    :src="item"
-                    v-for="item in JSON.parse(item.imageUrl)" 
-                    :key="item"
-                  />
-                </div>
-                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CASE">
+      <mescroll-vue ref="mescroll" :down="mescrollDown" @init="mescrollInit">
+        <!-- <div v-change1 id="myUl" slot="list"> -->
+        <section v-for="(item,index) in dialogueList" :key="index">
+          <div class="time" v-if="showTime(index)">{{item.createdAt | formatDate}}</div>
+          <div :class="item.type === Literal.MESSAGE_USER ? 'right' : 'left'" class="item">
+            <img class="avatar" :src="item.type === Literal.MESSAGE_USER ? (userInfo.avatar || userPic) : adminPic">
+            <div class="msg-box">
+              <div class="msg-pic" v-if="item.messageType === Literal.MESSAGE_PIC">
+                <img 
+                  :src="item"
+                  v-for="item in JSON.parse(item.imageUrl)" 
+                  :key="item"
+                />
+              </div>
+              <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CASE">
+                <p v-html="formatMsg(item.message)"></p>
+                <span @click="this.openCase(item.caseId)" style="color: rgb(252, 145, 83)">点击前往 ></span>
+              </div>
+              <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_WEBVIEW">
+                <p v-html="formatMsg(item.message)"></p>
+                <span @click="this.goCirCle(item.locationUrl)" style="color: rgb(252, 145, 83)">点击前往 ></span>`
+              </div>
+              <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CIRCLE">
                   <p v-html="formatMsg(item.message)"></p>
-                  <span @click="this.openCase(item.caseId)" style="color: rgb(252, 145, 83)">点击前往 ></span>
-                </div>
-                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_WEBVIEW">
-                  <p v-html="formatMsg(item.message)"></p>
-                  <span @click="this.goCirCle(item.locationUrl)" style="color: rgb(252, 145, 83)">点击前往 ></span>`
-                </div>
-                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CIRCLE">
-                   <p v-html="formatMsg(item.message)"></p>
-                   <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>
-                </div>
-                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_TEXT_PIC">
-                   <a :href="item.url">
-                     <header>{{item.title}}</header>
-                     <p v-html="formatMsg(item.message)"></p>
-                     <img v-if="item.imageUrl" :src="item.imageUrl" >
-                   </a>
-                </div>
-                <div class="msg-default" v-else>
-                  <p v-html="formatMsg(item.message)"></p>
-                </div>
+                  <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>
+              </div>
+              <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_TEXT_PIC">
+                  <a :href="item.url">
+                    <header>{{item.title}}</header>
+                    <p v-html="formatMsg(item.message)"></p>
+                    <img v-if="item.imageUrl" :src="item.imageUrl" >
+                  </a>
+              </div>
+              <div class="msg-default" v-else>
+                <p v-html="formatMsg(item.message)"></p>
               </div>
             </div>
-          </section>
-        </div>
-      </pull-refresh>
+          </div>
+        </section>
+        <!-- </div> -->
+       </mescroll-vue>
     </div>
     <div class="comment-btn" @click="closeComment">
       <img :src="uploadPic" alt="" class="comment-right">
@@ -77,6 +77,8 @@
   import adminPic from '../assets/admin_default.png'
   import userPic from '../assets/user_default.png'
   import uploadPic from '../assets/upload.png'
+  import MescrollVue from 'mescroll.js/mescroll.vue'
+
 
 
   let height = 0
@@ -86,14 +88,14 @@
       this.getDialogueList()
     },
     components: {
-      pullRefresh
+      MescrollVue // 注册mescroll组件
     },
     watch: {
       // 监听发送状态，成功时关闭 输入框，自动滚动到最底部
       sendStatus: function (val) {
         if (val) {
           this.showComment = false
-          this.scrollToBottom()
+          // this.scrollToBottom()
           this.initSendStatus()
         }
       }
@@ -112,7 +114,7 @@
       }
     },
     async mounted() {
-       window.addEventListener('scroll', this.scroll)
+      //  window.addEventListener('scroll', this.scroll)
     },
     data() {
       return {
@@ -122,6 +124,11 @@
         adminPic,
         userPic,
         uploadPic,
+        mescroll: null, // mescroll实例对象
+        mescrollDown: { // 上拉加载的配置.
+          callback: this.downCallback, // 上拉回调,此处简写; 相当于 callback: function(page, mescroll) { }
+          htmlNodata: '<p class="upwarp-nodata">-- END --</p>',
+        },
       }
     },
     methods: {
@@ -137,11 +144,11 @@
         this.inputValue = ''
       },
       scrollToBottom() {
-        console.log('scrollToBottom-->')
-        document.getElementById('myData').scrollTop = document.getElementById('myData').scrollHeight
+        // console.log('scrollToBottom-->')
+        // document.getElementById('myData').scrollTop = document.getElementById('myData').scrollHeight
       },
       scroll() {
-        console.log('scrollToTop-->', this.$el.scrollTop, this.$el.scrollHeight, this.$el.offsetHeight)
+        // console.log('scrollToTop-->', this.$el.scrollTop, this.$el.scrollHeight, this.$el.offsetHeight)
       },
       async refresh() {
        await this.getDialogueList(this.lastTime)
@@ -166,14 +173,26 @@
           console.log('fontMsg-->', fontMsg, linkMsg, optLinks)
           return fontMsg + linkMsg
         }).join('')
-      }
+      },
+      // mescroll组件初始化的回调,可获取到mescroll对象
+      mescrollInit (mescroll) {
+        this.mescroll = mescroll
+      },
+      downCallback () {
+        (async (lastTime) => {
+          await this.getDialogueList(lastTime)
+        })(this.lastTime)
+        this.$nextTick(() => {
+          this.mescroll.endSuccess()
+        })
+      },
     },
     directives: {
       change1: {
         inserted(el) {
-          console.log(height)
-          height += +el.scrollHeight
-          document.getElementById('myData').scrollTop = height
+          // console.log(height)
+          // height += +el.scrollHeight
+          // document.getElementById('myData').scrollTop = height
         },
       },
     },
@@ -199,9 +218,10 @@
 
   .tips {
     text-align: center;
-    margin-top: 1.2rem;
-    font-size: 15px;
-    line-height: 30px;
+    margin-top: 0.3rem;
+    font-size: 17px;
+    line-height: 35px;
+    color: #444;
 
     p {
       line-height: 30px;
@@ -365,6 +385,13 @@
         width: 100%;
       }
     }
+
+    .avatar {
+      float: left;
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+    }
   }
 
   .left {
@@ -390,6 +417,11 @@
     a:-webkit-any-link {
       color: rgb(68, 68, 68);
     }
+
+    .avatar {
+      float: left;
+      margin-right: 0.3rem;
+    }
   }
 
   .right {
@@ -410,27 +442,20 @@
       top: 0.1rem;
       content: '';
     }
+
+    .avatar {
+      float: right;
+      margin-left: 0.3rem;
+    }
   }
 
-  .avatar {
-    float: left;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-  }
-
-  .right .avatar {
-    float: right;
-    margin-left: 0.3rem;
-  }
-
-  .left .avatar {
-    float: left;
-    margin-right: 0.3rem;
-  }
-
-  .left .msg {
-    float: right;
+  .mescroll {
+    position: fixed;
+    top: 0px;
+    bottom: 0;
+    height: auto;
+    width: 100%;
+    margin-bottom: 1.2rem;
   }
   
 </style>
