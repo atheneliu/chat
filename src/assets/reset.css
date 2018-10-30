@@ -106,3 +106,7 @@ table {
   border-spacing: 0;
 }
 
+/* 自定义 */
+a {
+  word-break: break-all;
+}

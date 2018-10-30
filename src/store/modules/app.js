@@ -72,7 +72,7 @@ const app = {
     },
     async getDialogueList({ commit }, lastTime) {
       console.log('getDialogueList-->', lastTime)
-      const res = await request.get('/api/dialogue', { lastTime })
+      const res = await request.get('/api/dialogue', { lastTime, random: Math.random() })
       if (res.result === RquestStatus.SUCCESS) {
         commit(Feedback.UPDATE_DIALOGUE_LIST, res.dialogue)
       } else {

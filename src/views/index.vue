@@ -9,16 +9,39 @@
         <div v-change1 id="myUl" slot="list">
           <section v-for="(item,index) in dialogueList" :key="index">
             <div class="time" v-if="showTime(index)">{{item.createdAt | formatDate}}</div>
-            <div :class="item.type === 2 ? 'right' : 'left'" class="item">
-              <img class="avatar" src="">
-              <span class="msg">{{item.message}}</span>
+            <div :class="item.type === Literal.MESSAGE_ADMIN ? 'left' : 'right'" class="item">
+              <img class="avatar" :src="item.type === Literal.MESSAGE_ADMIN ? adminPic : (userInfo.avatar || userPic)">
+              <div class="msg-box">
+                <div class="msg-pic" v-if="item.messageType === Literal.MESSAGE_PIC">
+                  <img 
+                    :src="item"
+                    v-for="item in JSON.parse(item.imageUrl)" 
+                    :key="item"
+                  />
+                </div>
+                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CASE">
+                  <p v-html="formatMsg(item.message)"></p>
+                  <span @click="this.openCase(item.caseId)" style="color: rgb(252, 145, 83)">点击前往 ></span>
+                </div>
+                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_WEBVIEW">
+                  <p v-html="formatMsg(item.message)"></p>
+                  <span @click="this.goCirCle(item.locationUrl)" style="color: rgb(252, 145, 83)">点击前往 ></span>`
+                </div>
+                <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CIRCLE">
+                   <p v-html="formatMsg(item.message)"></p>
+                   <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>
+                </div>
+                <div class="msg-default" v-else>
+                  <p v-html="formatMsg(item.message)"></p>
+                </div>
+              </div>
             </div>
           </section>
         </div>
       </pull-refresh>
     </div>
     <div class="comment-btn" @click="closeComment">
-      <img src="" alt="" class="comment-right">
+      <img :src="uploadPic" alt="" class="comment-right">
       <div class="comment-left">请输入产品使用的问题、建议...</div>
     </div>
     <div class="mask" v-if="showComment" @click.self="closeComment">
@@ -40,15 +63,14 @@
   import { Feedback } from '@/constants/ActionTypes.js'
   import pullRefresh from '../components/PullFresh'
   // eslint-disable-next-line
-  import {
-    MESSAGE_USER,
-    MESSAGE_TEXT_PIC,
-    MESSAGE_PIC,
-    MESSAGE_WEBVIEW,
-    MESSAGE_CASE,
-    MESSAGE_CIRCLE,
-  } from '@/constants/Literal'
+  import Literal from '@/constants/Literal'
   import formatDate from '@/utils/formatDate'
+  import { isArray } from '@/utils/lang'
+  import R from 'ramda'
+  import adminPic from '../assets/admin_default.png'
+  import userPic from '../assets/user_default.png'
+  import uploadPic from '../assets/upload.png'
+
 
   let height = 0
   export default {
@@ -89,6 +111,10 @@
       return {
         showComment: false,
         inputValue: '',
+        Literal,
+        adminPic,
+        userPic,
+        uploadPic,
       }
     },
     methods: {
@@ -118,8 +144,22 @@
         const nowTime = new Date(nowItem.createdAt).getTime()
         const preTime = this.dialogueList[index - 1] ? new Date(this.dialogueList[index - 1].createdAt).getTime() : nowTime
         // 第一条+图文消息+间隔三分钟的消息 显示时间
-        return nowItem.isFirst || nowItem.messageType === MESSAGE_TEXT_PIC || (nowTime - preTime) / 1000 > 180
+        return nowItem.isFirst || nowItem.messageType === Literal.MESSAGE_TEXT_PIC || (nowTime - preTime) / 1000 > 180
       },
+      formatMsg(message) {
+        // 将文字中的链接替换出来：实现文本中的连接可以跳转
+        const optLinks = isArray(message.match(Literal.urlRegex)) ? message.match(Literal.urlRegex).map(item => (`<a href="${item}">${item}</a>`)) : ''
+        const otherContents = message.replace(Literal.urlRegex, '|&&|').split('|&&|')
+        return otherContents.map((content, index) => {
+          const textBr = content.replace(Literal.brRegex, '<br/>').split('<br/>')
+          const textP = isArray(textBr) && textBr.map((item) => (`<p>${item}</p>`))
+
+          const fontMsg = isArray(textP) && textP.join('') || content
+          const linkMsg = isArray(optLinks) && optLinks[index] || ''
+          console.log('fontMsg-->', fontMsg, linkMsg, optLinks)
+          return fontMsg + linkMsg
+        }).join('')
+      }
     },
     directives: {
       change1: {
@@ -133,6 +173,21 @@
   }
 </script>
 
+<style lang="scss">
+.right{
+  a:-webkit-any-link {
+    color: #fff;
+  }
+}
+
+.left {
+  a:-webkit-any-link {
+    color: #444;
+  }
+}
+</style>
+
+
 <style lang="scss" scoped>
 
   .tips {
@@ -144,6 +199,10 @@
     p {
       line-height: 30px;
     }
+  }
+
+  .orange {
+    color: rgb(252, 145, 83);
   }
 
 
@@ -193,7 +252,6 @@
     img {
       width: 0.45rem;
       height: 0.45rem;
-      background: pink;
       margin-right: 0.1rem;
     }
   }
@@ -280,33 +338,88 @@
   
   .item {
     padding: 0.15rem 0;
+    display: block;
+    overflow: hidden;
+
+    .msg-box {
+      border-radius: 4px;
+      position: relative;
+      color: rgb(255, 255, 255);
+      display: inline-block;
+      min-height: 0.75rem;
+      max-width: 66%;
+      box-sizing: border-box;
+      padding: 0.16rem;
+      font-size: 15px;
+      line-height: 0.5rem;
+      font-weight: 500;
+
+      img {
+        width: 100%;
+      }
+    }
   }
 
   .left {
-    display: block;
-    overflow: hidden;
-    line-height: 0.75rem;
+    .msg-box {
+      float: left;
+      position: relative;
+      background-color: #fff;
+      color: rgb(68, 68, 68);
+    }
+
+    .msg-box::after {
+      width: 0;
+      height: 0;
+      border-top: 0.1rem solid transparent;
+      border-right: 0.2rem solid #fff;
+      border-bottom: 0.1rem solid transparent;
+      position: absolute;
+      left: -0.19rem;
+      top: 0.1rem;
+      content: '';
+    }
+
+    a:-webkit-any-link {
+      color: rgb(68, 68, 68);
+    }
   }
 
   .right {
-    display: block;
-    overflow: hidden;
-    line-height: 0.75rem;
+    .msg-box {
+      background-color: rgb(97, 212, 157);
+      color: #fff;
+      float: right;
+    }
+
+    .msg-box::after {
+      width: 0;
+      height: 0;
+      border-top: 0.1rem solid transparent;
+      border-left: 0.2rem solid rgb(97, 212, 157);
+      border-bottom: 0.1rem solid transparent;
+      position: absolute;
+      right: -0.19rem;
+      top: 0.1rem;
+      content: '';
+    }
   }
 
   .avatar {
     float: left;
     width: 0.75rem;
     height: 0.75rem;
+    border-radius: 50%;
   }
 
   .right .avatar {
-    margin-right: 0.3rem;
+    float: right;
+    margin-left: 0.3rem;
   }
 
   .left .avatar {
-    float: right;
-    margin-left: 0.3rem;
+    float: left;
+    margin-right: 0.3rem;
   }
 
   .left .msg {

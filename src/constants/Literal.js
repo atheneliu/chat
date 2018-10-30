@@ -28,4 +28,7 @@ export default {
   MESSAGE_USER: 1,
   MESSAGE_ADMIN: 2,
   MAX_PIC: 9,
+
+  urlRegex: /http(s)?:\/\/([\w-]+(\.)?(:)?)+[\w-]+(\/[\w-./?%&=]*)?/g,
+  brRegex: /\n|\r$/g,
 }
