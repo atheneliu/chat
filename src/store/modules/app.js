@@ -80,6 +80,10 @@ const app = {
         Vue.toast('获取聊天记录失败，请退出该页面重试')
       }
     },
+    async recordData(recordId) {
+      const res = request.put(`/api/record/${recordId}`)
+      console.log('res-->', res)
+    },
   },
   getters: {
     userInfo: state => state.userInfo,

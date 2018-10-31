@@ -5,17 +5,22 @@
 </template>
 
 <script>
-  import { mapActions } from 'vuex'
+  import { mapActions, mapGetters } from 'vuex'
 
   export default {
     name: 'app',
+    computed: {
+      ...mapGetters([
+        'userInfo',
+      ]),
+    },
     methods: {
       ...mapActions([
         'getUserInfo',
       ]),
     },
     async created() {
-      this.getUserInfo()
+      await this.getUserInfo()
     }
   }
 </script>

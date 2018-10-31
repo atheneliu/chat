@@ -15,24 +15,26 @@
               <div class="msg-pic" v-if="item.messageType === Literal.MESSAGE_PIC">
                 <img 
                   :src="item"
-                  v-for="item in JSON.parse(item.imageUrl)" 
+                  v-for="(item,imageIndex) in JSON.parse(item.imageUrl)" 
                   :key="item"
+                  @click="browseImage(index, imageIndex)"
                 />
               </div>
               <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CASE">
                 <p v-html="formatMsg(item.message)"></p>
-                <span @click="this.openCase(item.caseId)" style="color: rgb(252, 145, 83)">点击前往 ></span>
+                <a @click="openCase(item.caseId)" style="color: rgb(252, 145, 83)">点击前往 ></a>
               </div>
               <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_WEBVIEW">
                 <p v-html="formatMsg(item.message)"></p>
-                <span @click="this.goCirCle(item.locationUrl)" style="color: rgb(252, 145, 83)">点击前往 ></span>`
+                <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>`
               </div>
               <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_CIRCLE">
                   <p v-html="formatMsg(item.message)"></p>
-                  <a :href="item.locationUrl" style="color: rgb(252, 145, 83)">点击前往 ></a>
+                  <a style="color: rgb(252, 145, 83)" @click="goCirCle(item.locationUrl)">点击前往 ></a>
               </div>
               <div class="msg-link" v-if="item.messageType === Literal.MESSAGE_TEXT_PIC">
-                  <a :href="item.url">
+                  <!-- <a :href="item.url" @click="saTrack(item)"> -->
+                  <a @click="saTrack(item)">
                     <header>{{item.title}}</header>
                     <p v-html="formatMsg(item.message)"></p>
                     <img v-if="item.imageUrl" :src="item.imageUrl" >
@@ -72,7 +74,7 @@
   // eslint-disable-next-line
   import Literal from '@/constants/Literal'
   import formatDate from '@/utils/formatDate'
-  import { isArray } from '@/utils/lang'
+  import { isArray, checkUrl } from '@/utils/lang'
   import R from 'ramda'
   import adminPic from '../assets/admin_default.png'
   import userPic from '../assets/user_default.png'
@@ -139,6 +141,7 @@
       ...mapActions([
         'getDialogueList',
         'sendMessage',
+        'recordData',
       ]),
       closeComment() {
         this.showComment = !this.showComment
@@ -217,6 +220,32 @@
           bucket: 'feedback',
         })
         return imageKeys.map(key => `${uploadDomain}${userId}/${bizUid}/${key}`)
+      },
+      browseImage(index, imageIndex) {
+        const ImgUrls = JSON.parse(this.dialogueList[index].imageUrl).map(imageUrl => ({ param: imageUrl, type: 'URL' }))
+        window.$bridge.browseImage({ urls: ImgUrls, index })
+      },
+      openCase(caseId) {
+        window.$bridge.goRecordDetail(caseId)
+        // return true
+      },
+      goCirCle(url) {
+        if (checkUrl(url)) window.$bridge.goCircle(url)
+      },
+      saTrack({ recordId, title, message, appName }) {
+        try {
+          // this.recordData(recordId)
+          // window.sa.track('push', {
+          //   page: '杏服小秘书',
+          //   message_id: recordId,
+          //   action: 'click',
+          //   title,
+          //   description: message,
+          //   app_name: appName,
+          // })
+        } catch (error) {
+          console.log('error in saTrack ', error)
+        }
       }
     },
     directives: {
@@ -487,7 +516,7 @@
     bottom: 0;
     height: auto;
     width: 100%;
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.9rem;
   }
   
 </style>
