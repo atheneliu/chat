@@ -107,7 +107,9 @@
         'userInfo',
         'dialogueList',
         'sendStatus',
-        'lastTime'
+        'lastTime',
+        'newMessageFlag',
+        'isLoadedNewMessage'
       ]),
     },
     filters: {
@@ -116,6 +118,7 @@
       }
     },
     async mounted() {
+      this.getNoRead()
       //  window.addEventListener('scroll', this.scroll)
     },
     data() {
@@ -132,6 +135,7 @@
           htmlNodata: '<p class="upwarp-nodata">-- END --</p>',
         },
         limit: 9,
+        timer: null,
       }
     },
     methods: {
@@ -142,6 +146,7 @@
         'getDialogueList',
         'sendMessage',
         'recordData',
+        'getNewMessages',
       ]),
       closeComment() {
         this.showComment = !this.showComment
@@ -246,7 +251,24 @@
         } catch (error) {
           console.log('error in saTrack ', error)
         }
-      }
+      },
+      getNoRead() {
+        this.setTimer()
+        this.getNewMessages()
+      },
+      setTimer() {
+        this.timer = setTimeout(() => {
+          this.getRequestFlag()
+        }, 2000)
+      },
+      getRequestFlag() {
+        clearTimeout(this.timer)
+        if (this.isLoadedNewMessage) {
+          this.getNoRead()
+        } else {
+          this.setTimer()
+        }
+      },
     },
     directives: {
       change1: {

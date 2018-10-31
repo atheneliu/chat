@@ -15,6 +15,8 @@ const app = {
     userInfo: {},
     sendStatus: false,
     lastTime: new Date(),
+    newMessageFlag: false,
+    isLoadedNewMessage: false,
   },
   mutations: {
     [Feedback.UPDATE_USER_INFO](state, userInfo) {
@@ -33,6 +35,17 @@ const app = {
     [Feedback.INIT_SENDSTATUS](state) {
       state.sendStatus = false
     },
+    [Feedback.GET_NEW_MESSAGE](state, newMessage) {
+     state.dialogueList = [...state.dialogueList, ...newMessage]
+     state.newMessageFlag = true
+     state.isLoadedNewMessage = true
+    },
+    [Feedback.NOT_GET_NEW_MESSAGE](state) {
+     state.newMessageFlag = false
+    },
+    [Feedback.LOADING_NEW_MESSAGE](state) {
+      state.isLoadedNewMessage = false
+    }
   },
   actions: {
     async getUserInfo({ commit }) {
@@ -84,12 +97,29 @@ const app = {
       const res = request.put(`/api/record/${recordId}`)
       console.log('res-->', res)
     },
+    async getNewMessages({ commit, getters }) {
+      const { appName, userId, deviceId } = getters.userInfo
+      const senderId = userId || deviceId
+      const res = await request.get(`/api/message/un-read/${senderId}`, { appName })
+      commit(Feedback.LOADING_NEW_MESSAGE)
+      if (res.result === RquestStatus.SUCCESS) {
+        if(res.unreadMessages.results.length !== 0) {
+          commit(Feedback.GET_NEW_MESSAGE, res.unreadMessages.results)
+          return
+        }
+        commit(Feedback.NOT_GET_NEW_MESSAGE)
+      } else {
+        Vue.toast('获取新消息失败，请退出该页面重试')
+      }
+    }
   },
   getters: {
     userInfo: state => state.userInfo,
     dialogueList: state => state.dialogueList,
     sendStatus: state => state.sendStatus,
     lastTime: state => state.lastTime,
+    newMessageFlag: state => state.newMessageFlag,
+    isLoadedNewMessage: state => state.isLoadedNewMessage,
   },
 }
 
